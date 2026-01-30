@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mem-ontology": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["build/index.js"]
+    }
+  }
+}
