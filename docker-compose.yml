@@ -1,0 +1,12 @@
+services:
+  mem-mcp:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    image: mem-mcp:latest
+    container_name: mem-mcp
+    env_file:
+      - .env
+    stdin_open: true
+    tty: false
+    restart: unless-stopped
