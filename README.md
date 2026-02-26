@@ -34,6 +34,12 @@ cp .env.example .env
 
 The server will fail at startup if required variables are missing.
 
+**Server settings**:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | HTTP port the server listens on | `3000` |
+
 **Infrastructure graphs** (required):
 
 | Variable | Description |
@@ -53,15 +59,14 @@ State graphs are discovered dynamically — adding a new state requires only a n
 
 ### For Claude Code
 
-Add a `.mcp.json` file in the project root:
+Add a `.mcp.json` file in the project root pointing to the running HTTP server:
 
 ```json
 {
   "mcpServers": {
     "mem-ontology": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["build/index.js"]
+      "type": "http",
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
@@ -78,8 +83,8 @@ Add to your MCP settings configuration file:
 {
   "mcpServers": {
     "mem-ontology": {
-      "command": "node",
-      "args": ["/absolute/path/to/mem-ontologie-mcp/build/index.js"]
+      "type": "http",
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
@@ -140,7 +145,8 @@ Arguments: { "query": "Fische", "bundesland": "SN" }
 
 ## Architecture
 
-- **Transport:** stdio (local MCP server)
+- **Transport:** Streamable HTTP (MCP over HTTP)
+- **Default port:** 3000 (configurable via `PORT` env var)
 - **SDK:** `@modelcontextprotocol/sdk` with `McpServer` and `zod` schemas
 - **Data source:** SPARQL endpoint (configurable via `SPARQL_ENDPOINT` env var)
 - **Runtime:** Node.js, TypeScript, ES modules
