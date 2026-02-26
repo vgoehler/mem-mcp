@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "mem-ontology": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["build/index.js"]
+      "type": "http",
+      "url": "http://localhost:3000/mcp"
     }
   }
 }

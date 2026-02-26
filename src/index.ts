@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
+import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import {
   querySparql,
@@ -601,14 +603,41 @@ LIMIT 50`;
 // --- Start ---
 
 async function main() {
-  const transport = new StdioServerTransport();
+  const portEnv = process.env.PORT ?? "3000";
+  const PORT = parseInt(portEnv, 10);
+  if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
+    console.error(`Invalid PORT value: "${portEnv}". Must be a number between 1 and 65535.`);
+    process.exit(1);
+  }
+
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+  });
+
   await server.connect(transport);
-  console.error("MEM Ontology MCP Server running on stdio");
-  console.error(`SPARQL endpoint: ${SPARQL_ENDPOINT}`);
-  console.error(`Infrastructure graphs: ${INFRA_GRAPHS.join(", ")}`);
-  console.error(
-    `State graphs: ${Object.entries(STATE_GRAPHS).map(([c, g]) => `${c}=${g}`).join(", ") || "(none)"}`
-  );
+
+  const httpServer = createServer((req, res) => {
+    transport.handleRequest(req, res).catch((err) => {
+      console.error("Request handling error:", err);
+      if (!res.headersSent) {
+        res.writeHead(500).end("Internal Server Error");
+      }
+    });
+  });
+
+  httpServer.on("error", (err) => {
+    console.error("HTTP server error:", err);
+    process.exit(1);
+  });
+
+  httpServer.listen(PORT, () => {
+    console.error(`MEM Ontology MCP Server running on HTTP port ${PORT}`);
+    console.error(`SPARQL endpoint: ${SPARQL_ENDPOINT}`);
+    console.error(`Infrastructure graphs: ${INFRA_GRAPHS.join(", ")}`);
+    console.error(
+      `State graphs: ${Object.entries(STATE_GRAPHS).map(([c, g]) => `${c}=${g}`).join(", ") || "(none)"}`
+    );
+  });
 }
 
 main().catch((error) => {
